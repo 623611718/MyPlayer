@@ -1,8 +1,7 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    >
+    android:layout_height="match_parent">
 
     <SurfaceView
         android:id="@+id/surfaceview"
@@ -10,11 +9,38 @@
         android:layout_height="match_parent"
         android:onClick="display" />
 
-    <LinearLayout
+    <TextView
+        android:id="@+id/tv_sound"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:layout_gravity="right|center_vertical"
+
+        android:background="#33ffffff"
+        android:padding="8dp"
+        android:text="音量"
+         />
+
+    <com.example.lz.myplayer.View.Play_title
+        android:id="@+id/play_title"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
+        android:layout_height="40dp"></com.example.lz.myplayer.View.Play_title>
+
+    <LinearLayout
+        android:id="@+id/sk_linear"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
         android:layout_gravity="bottom"
-        android:gravity="center_vertical" >
+        android:layout_marginLeft="10dp"
+        android:gravity="center_vertical">
+
+        <Button
+            android:id="@+id/playing"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+
+            android:background="@drawable/play_pause" />
 
         <TextView
             android:id="@+id/tv_begin"
@@ -22,14 +48,15 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="@string/start_time"
-            android:textSize="15dp" />
+            android:textColor="@color/white"
+            android:textSize="10dp" />
 
         <SeekBar
             android:id="@+id/sb_main"
+            style="?android:attr/progressBarStyleHorizontal"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="13"
-            style="?android:attr/progressBarStyleHorizontal"
             android:background="#00000000" />
 
         <TextView
@@ -37,7 +64,8 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textSize="15dp" />
+            android:textColor="@color/white"
+            android:textSize="10dp" />
     </LinearLayout>
 
     <Button

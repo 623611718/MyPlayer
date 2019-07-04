@@ -45,7 +45,7 @@ import com.example.lz.myplayer.View.Play_title;
 import java.io.File;
 import java.io.IOException;
 
-public class PlayerActivity extends Activity implements View.OnClickListener{
+public class HttpActivity extends Activity implements View.OnClickListener, CacheListener {
     protected static final int PROGRESS = 1;
     protected static final int isplaying = 2;
     private String path, name;
@@ -61,6 +61,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener{
     private int duration;
     private Utils utils;
     private int max;
+    private String proxyUrl;//缓存的地址
     private LinearLayout sk_linear;
     private int pro = 0;
     private int errorcode = 0;
@@ -159,7 +160,19 @@ public class PlayerActivity extends Activity implements View.OnClickListener{
 
     }
 
+    @Override
+    public void onCacheAvailable(File cacheFile, String url, int percentsAvailable) {
+        sb_main.setSecondaryProgress(percentsAvailable);
+        Log.i("test", "percentsAvailable:  " + percentsAvailable);
+    }
 
+    private HttpProxyCacheServer getProxy() {
+        return App.getProxy(getApplicationContext());
+    }
+
+    private HttpProxyCacheServer newProxy() {
+        return new HttpProxyCacheServer.Builder(this).maxCacheFilesCount(20).build();
+    }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
@@ -462,10 +475,14 @@ public class PlayerActivity extends Activity implements View.OnClickListener{
         //mediaPlayer.setOnBufferingUpdateListener(new BufferingUpdateListener());
         // 设置拖动监听事件
         sb_main.setOnSeekBarChangeListener(new SeekBarChangeListener());
-
+        //获取缓存进度
+        HttpProxyCacheServer proxy = getProxy();
+        // proxy = newProxy();
+        proxy.registerCacheListener(this, path);  //注册缓存进度更新
+        proxyUrl = proxy.getProxyUrl(path);  //缓存url
         try {
 
-            mediaPlayer.setDataSource(path);
+            mediaPlayer.setDataSource(proxyUrl);
             Log.i("play", "url  " + path);
             // 设置异步加载视频，包括两种方式 prepare()同步，prepareAsync()异步
             mediaPlayer.prepare();
@@ -557,7 +574,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener{
                 if (fromUser) {
                     Log.i("dsa", "onProgressChanged");
                     pro = progress;
-                    PlayerActivity.MyAsyncTask asynctask = null;
+                    MyAsyncTask asynctask = null;
                     asynctask = new MyAsyncTask();
                     asynctask.execute();
 
@@ -717,6 +734,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener{
         if (mBatInfoReceiver != null) {
             unregisterReceiver(mBatInfoReceiver);
         }
+        App.getProxy(this).unregisterCacheListener(this);
         super.onDestroy();
     }
 }

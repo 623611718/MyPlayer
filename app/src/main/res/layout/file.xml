@@ -6,8 +6,8 @@
     <ImageView 
         android:id="@+id/iv_icon"
         android:src="@drawable/video_default_icon"
-        android:layout_height="100dp"
-        android:layout_width="100dp"
+        android:layout_height="80dp"
+        android:layout_width="80dp"
         />
     <LinearLayout 
         android:layout_marginLeft="8dp"

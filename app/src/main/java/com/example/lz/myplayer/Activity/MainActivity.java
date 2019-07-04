@@ -1,262 +1,195 @@
 package com.example.lz.myplayer.Activity;
 
-import android.app.AlertDialog;
-import android.app.ListActivity;
-import android.content.DialogInterface;
-import android.content.DialogInterface.OnClickListener;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.res.Resources;
-import android.os.Bundle;
-import android.os.Environment;
-import android.util.Log;
-import android.view.KeyEvent;
-import android.view.View;
-import android.view.Window;
-import android.widget.EditText;
-import android.widget.ListView;
-import android.widget.Toast;
-
-import com.example.lz.myplayer.Adapter.MyAdapter;
-import com.example.lz.myplayer.R;
-
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
-public class MainActivity extends ListActivity {
-    private static final String ROOT_PATH = "/storage/emulated/0";
+import android.graphics.Rect;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.view.ViewPager;
+import android.support.v4.view.ViewPager.OnPageChangeListener;
+import android.app.ActionBar.Tab;
+import android.app.ActionBar.TabListener;
+import android.app.Activity;
+import android.app.FragmentTransaction;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AppCompatActivity;
+import android.text.style.TtsSpan;
+import android.util.DisplayMetrics;
+import android.util.Log;
+import android.view.Display;
+import android.view.LayoutInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.support.design.widget.TabLayout;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
-    private ArrayList<String> names = null;
 
-    private ArrayList<String> paths = null;
-    private String path1 = "/storage/emulated/0"; // 当前显示的路径
-    private View view;
-    private EditText editText;
+import com.example.lz.myplayer.Adapter.MyFragmentPagerAdapter;
+import com.example.lz.myplayer.Adapter.TabPagerAdapter;
+import com.example.lz.myplayer.Adapter.ViewPagerAdapter;
+import com.example.lz.myplayer.R;
+import com.example.lz.myplayer.fragment.Fragment_0;
+import com.example.lz.myplayer.fragment.Fragment_1;
+import com.example.lz.myplayer.fragment.Fragment_2;
+
+public class MainActivity extends AppCompatActivity implements DrawerLayout.DrawerListener {
+
+    private TabLayout mTab;  //底部栏
+    private DrawerLayout mDrawerLayout; //
+    private ViewPager mViewPager;   //滑动的页面
+    private ActionBarDrawerToggle mToggle;  //左上角按键
+
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        initChmod("chmod 666 /storage/emulated/0");
-        // 显示文件列表
-        showFileDir(ROOT_PATH);
-        Log.i("dsa", "onCreate activity");
+        initView();
+        initActionBar();
+        initViewPager();
+     //   initDp();
     }
 
-    private void initChmod(String command) {
-        Process process = null;
-        DataOutputStream os = null;
-        try {
-            process = Runtime.getRuntime().exec("su");
-            os = new DataOutputStream(process.getOutputStream());
-            os.writeBytes(command + "\n");
-            os.writeBytes("exit\n");
-            os.flush();
-        } catch (Exception e) {
-        } finally {
-            try {
-                if (os != null) {
-                    os.close();
-                }
-                process.destroy();
-            } catch (Exception e) {
+    //定义Viewpager和底部栏的大小
+    private void initDp() {
+      /*  WindowManager wm = this.getWindowManager();
+        DisplayMetrics dm = new DisplayMetrics();
+        wm.getDefaultDisplay().getMetrics(dm);
+        int width = dm.widthPixels;         // 屏幕宽度（像素）
+        int height = dm.heightPixels;       // 屏幕高度（像素）
+        float density = dm.density;         // 屏幕密度（0.75 / 1.0 / 1.5）
+        int densityDpi = dm.densityDpi;     // 屏幕密度dpi（120 / 160 / 240）
+        // 屏幕宽度算法:屏幕宽度（像素）/屏幕密度
+        int screenWidth = (int) (width / density);  // 屏幕宽度(dp)
+        int screenHeight = (int) (height / density);// 屏幕高度(dp)*/
+
+
+        Rect rect = new Rect();
+        getWindow().getDecorView().getWindowVisibleDisplayFrame(rect);///取得整个视图部分,注意，如果你要设置标题样式，这个必须出现在标题样式之后，否则会出错
+        int top = rect.top;////状态栏的高度，所以rect.height,rect.width分别是系统的高度的宽度
+        View v = getWindow().findViewById(Window.ID_ANDROID_CONTENT);///获得根视图
+        int top2 = v.getTop();///状态栏标题栏的总高度,所以标题栏的高度为top2-top
+        int width = v.getWidth();///视图的宽度,这个宽度好像总是最大的那个
+        int height = v.getHeight();////视图的高度，不包括状态栏和标题栏
+        Display display = getWindowManager().getDefaultDisplay() ;
+        display.getWidth();
+        display.getHeight();
+
+        Log.i("test","actionbarheight:  "+actionBar.getHeight());
+        Log.i("test","screenWidth:  "+width+"  "+"screenHeight:  "+height);
+        LinearLayout.LayoutParams lp_vp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 500);
+        mViewPager.setLayoutParams(lp_vp);
+        LinearLayout.LayoutParams lp_tab = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 120);
+        mTab.setLayoutParams(lp_tab);
+    }
+
+    //设置ViewPager
+    private void initViewPager() {
+        List<Fragment> list = new ArrayList<>();
+        list.add(new Fragment_0());
+        list.add(new Fragment_1());
+        list.add(new Fragment_2());
+        list.add(new Fragment_0());
+        MyFragmentPagerAdapter adapter = new MyFragmentPagerAdapter(getSupportFragmentManager());
+        adapter.setFragmentList(list);
+        mTab.addTab(mTab.newTab());
+        mTab.addTab(mTab.newTab());
+        mTab.addTab(mTab.newTab());
+        mTab.addTab(mTab.newTab());
+        mViewPager.setAdapter(adapter);
+        mTab.getTabAt(0).setText("本地视频").setIcon(R.drawable.tab_i8);
+        mTab.getTabAt(1).setText("网络视频").setIcon(R.drawable.radio_network);
+        mTab.getTabAt(2).setText("更多...").setIcon(R.drawable.tab_i4);
+        mTab.getTabAt(3).setText("用户").setIcon(R.drawable.tab_i6);
+    }
+
+    private ActionBar actionBar;
+    //设置ActionBar和ActionBarDrawerToggle
+    private void initActionBar() {
+      /*  View view = LayoutInflater.from(this).inflate(R.layout.layout_title,null);
+        TextView tv = (TextView) view.findViewById(R.id.title1);
+        tv.setText("本地播放");*/
+        actionBar = getSupportActionBar();
+        actionBar.setTitle("本地播放");
+    /*    actionBar.setCustomView(view);
+        actionBar.setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
+        actionBar.setDisplayShowCustomEnabled(true);
+        actionBar.setDisplayShowHomeEnabled(false);
+        actionBar.setDisplayShowTitleEnabled(false);*/
+        actionBar.setDisplayHomeAsUpEnabled(true);// 左上角添加一个返回图标
+        //ActionBar和DrawerLayout联动
+        mToggle = new ActionBarDrawerToggle(this, mDrawerLayout, R.string.open, R.string.close);
+        mToggle.syncState();//同步状态
+        mDrawerLayout.addDrawerListener(mToggle);
+    }
+
+    //初始化控件
+    private void initView() {
+        mTab = (TabLayout) findViewById(R.id.tab);
+        mViewPager = (ViewPager) findViewById(R.id.viewPager);
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        mTab.setupWithViewPager(mViewPager);
+        Log.i("test","width:  "+mTab.getLayoutParams().width+"  "+"height:  "+mTab.getLayoutParams().height );
+        mTab.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                //选择时触发
+                actionBar.setTitle(tab.getText());
             }
-        }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+                //未选择时触发
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+                //选中之后再次点击触发
+            }
+        });
     }
 
-    private void showFileDir(String path) {
-        Log.i("dsa", "path gen " + path);
-
-        names = new ArrayList<String>();
-        paths = new ArrayList<String>();
-        File file = new File(path);
-        Runtime runtime = Runtime.getRuntime();
-        try {
-            runtime.exec("chmod 777 " + path);
-        } catch (IOException e) {
-            e.printStackTrace();
+    /*
+    左上角按钮点击事件
+     */
+    @Override
+    public boolean onOptionsItemSelected(MenuItem menuItem) {
+        if (mToggle.onOptionsItemSelected(menuItem)) {
+            return true;
         }
+        return super.onOptionsItemSelected(menuItem);
+    }
 
-      /*  try {
-            String command = "chmod 777 " + file.getAbsolutePath();
-            Log.i("dsa", "command = " + command);
-            Runtime runtime = Runtime.getRuntime();
 
-            Process proc = runtime.exec(command);
-        } catch (IOException e) {
-            Log.i("dsa", "chmod fail!!!!");
-            e.printStackTrace();
-        }*/
-        path1 = file.getPath();
-        Log.i("dsa", "showFileDir  path1  " + path1);
-        File[] files = file.listFiles();
-        Log.i("dsa", "files长度: " + file.getPath());
-        // 如果当前目录不是根目录
-        if (!ROOT_PATH.equals(path)) {
-            names.add("@1");
-            paths.add(ROOT_PATH);
-            names.add("@2");
-            paths.add(file.getParent());
-        }
-        // 添加所有文件
-        for (File f : files) {
-            // Log.i("dsa","f.getName()  "+f.getName());
-            // Log.i("dsa","f.getPath()  "+f.getPath());
+    /*
+    DrawerLayout 监听事件
+     */
+    @Override
+    public void onDrawerSlide(View drawerView, float slideOffset) {
 
-            int start = f.getName().lastIndexOf(".") + 1;
-            int end = f.getName().length();
-            String name = f.getName().substring(start, end);
-           /* if (f.isDirectory()
-                    || name.equalsIgnoreCase("3g2") || name.equalsIgnoreCase("3gp")
-                    || name.equalsIgnoreCase("aac") || name.equalsIgnoreCase("ape")
-                    || name.equalsIgnoreCase("asf") || name.equalsIgnoreCase("avi")
-                    || name.equalsIgnoreCase("avs") || name.equalsIgnoreCase("f4v")
-                    || name.equalsIgnoreCase("flac") || name.equalsIgnoreCase("flv")
-                    || name.equalsIgnoreCase("m3u8") || name.equalsIgnoreCase("m1v")
-                    || name.equalsIgnoreCase("m2t") || name.equalsIgnoreCase("m2ts")
-                    || name.equalsIgnoreCase("m2v") || name.equalsIgnoreCase("m4a")
-                    || name.equalsIgnoreCase("m4v") || name.equalsIgnoreCase("mkv")
-                    || name.equalsIgnoreCase("mov") || name.equalsIgnoreCase("mp3")
-                    || name.equalsIgnoreCase("mp4") || name.equalsIgnoreCase("mp4g")
-                    || name.equalsIgnoreCase("ts") || name.equalsIgnoreCase("mpeg")) {*/
-                names.add(f.getName());
-                paths.add(f.getPath());
-         //   }
-            /*
-             * names.add(f.getName()); paths.add(f.getPath());
-			 */
-        }
-        this.setListAdapter(new MyAdapter(this, names, paths));
     }
 
     @Override
-    protected void onListItemClick(ListView l, View v, int position, long id) {
-        path1 = paths.get(position);
-        File file = new File(path1);
-        // 文件存在并可读
-        if (file.exists() && file.canRead()) {
-            if (file.isDirectory()) {
-                // 显示子目录及文件
-                showFileDir(path1);
-                Log.i("dsa", "path1  " + path1);
-            } else {
-                // Log.i("dsa","file "+file);
-                // Log.i("dsa","reader "+file.getPath());
-                file.getName();
-                Log.i("play","name:  "+file.getName());
-                openFile(file.getPath(),file.getName());
-            }
-        }
-        // 没有权限
-        else {
-            Resources res = getResources();
-            new AlertDialog.Builder(this).setTitle("Message")
-                    .setMessage("没有权限")
-                    .setPositiveButton("OK", new OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                        }
-                    }).show();
-        }
-        super.onListItemClick(l, v, position, id);
+    public void onDrawerOpened(View drawerView) {
+
     }
 
-    // 打开文件
-    private void openFile(String path,String name) {
-        Intent intent = new Intent(MainActivity.this, PlayerActivity.class);
-        intent.putExtra("url", path);
-        intent.putExtra("name",name);
-        SharedPreferences.Editor editor = getSharedPreferences("PlayName",MODE_PRIVATE).edit();
-        editor.putString("name",name);
-        editor.apply();
+    @Override
+    public void onDrawerClosed(View drawerView) {
 
-
-        Log.i("dsa", "path111  " + path);
-        startActivity(intent);
-        // intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        // intent.setAction(android.content.Intent.ACTION_VIEW);
-        // String type = getMIMEType(file);
-        // intent.setDataAndType(Uri.fromFile(file), type);
-        // startActivity(intent);
     }
 
-    // 获取文件mimetype
-    private String getMIMEType(File file) {
-        String type = "";
-        String name = file.getName();
-        // 文件扩展名
-        String end = name.substring(name.lastIndexOf(".") + 1, name.length())
-                .toLowerCase();
-        if (end.equals("m4a") || end.equals("mp3") || end.equals("wav")) {
-            type = "audio";
-        } else if (end.equals("mp4") || end.equals("3gp")) {
-            type = "video";
-        } else if (end.equals("jpg") || end.equals("png") || end.equals("jpeg")
-                || end.equals("bmp") || end.equals("gif")) {
-            type = "image";
-        } else {
-            // 如果无法直接打开，跳出列表由用户选择
-            type = "*";
-        }
-        type += "/*";
-        return type;
-    }
+    @Override
+    public void onDrawerStateChanged(int newState) {
 
-    private void displayToast(String message) {
-        Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
-    }
-
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-
-        Log.i("dsa", "keyCode  " + keyCode);
-        if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
-            if (path1.equals("/")) {   //path1  当前路径
-                finish(); // 如果是根目录 则退出
-            } else { // 如果不是根目录,返回上一级
-                File f = new File(path1);
-                boolean d = f.isDirectory();
-                Log.i("dsa", "  d  " + d);
-                String path2 = path1.substring(0, path1.lastIndexOf("/") + 1);   //path2  返回上一级的路径
-                // 播放文件之后path1 路径 xxx/xxx.mp4 继续分割两次
-                if (d == false) {
-                    path2 = path2.substring(0, path2.lastIndexOf("/"));
-                    path2 = path2.substring(0, path2.lastIndexOf("/"));
-                }
-                if (path2.equals(" ")) {   //如果播放了根目录 / 下的文件  path2重新赋值
-                    path2 = "/";
-                }
-                Log.i("dsa", "back path2  " + path2);
-                File file = new File(path2);
-                // 文件存在并可读
-                if (file.exists() && file.canRead()) {
-                    if (file.isDirectory()) {
-                        // 显示子目录及文件
-                        showFileDir(path2);
-                    } else {
-
-                    }
-                }
-                // 没有权限
-                else {
-                    Resources res = getResources();
-                    new AlertDialog.Builder(this).setTitle("Message")
-                            .setMessage("没有权限")
-                            .setPositiveButton("OK", new OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog,
-                                                    int which) {
-                                }
-                            }).show();
-                }
-            }
-            Log.i("dsa", "BACK path " + path1);
-            return true;
-        }
-        return super.onKeyDown(keyCode, event);
     }
 }
-
-

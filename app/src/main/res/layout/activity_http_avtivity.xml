@@ -19,7 +19,7 @@
         android:background="#33ffffff"
         android:padding="8dp"
         android:text="音量"
-         />
+        />
 
     <com.example.lz.myplayer.View.Play_title
         android:id="@+id/play_title"

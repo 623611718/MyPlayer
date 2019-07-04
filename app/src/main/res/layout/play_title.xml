@@ -3,10 +3,11 @@
     android:layout_width="match_parent"
     android:layout_height="40dp"
     android:orientation="horizontal"
+    android:background="@color/gray"
     >
 
     <Button
-        android:layout_width="10dp"
+        android:layout_width="30dp"
         android:layout_height="10dp"
         android:visibility="invisible" />
 
@@ -25,6 +26,9 @@
         android:gravity="left"
         android:text="@string/play_title_name"
         android:textColor="@color/white"
+        android:singleLine="true"
+        android:maxEms="10"
+        android:ellipsize="end"
         android:layout_gravity="center"/>
 
     <LinearLayout
@@ -58,5 +62,6 @@
         android:layout_width="20dp"
         android:layout_height="20dp"
         android:layout_gravity="center"
+        android:layout_marginRight="20dp"
         android:background="@drawable/play_screen_unlock" />
 </LinearLayout>
